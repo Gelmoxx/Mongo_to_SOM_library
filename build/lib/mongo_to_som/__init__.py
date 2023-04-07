@@ -1,1 +1,1 @@
-from mongo_to_som.mongotosom import mongo_to_som
+#from mongo_to_som.mongotosom import mongo_to_som
