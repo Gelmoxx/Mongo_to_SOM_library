@@ -10,8 +10,8 @@ with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='mongo-to-som',
-    packages=find_packages(include=['mongo_to_som']),
+    name="mongo_to_som",
+    packages=["mongo_to_som"],
     include_package_data=True,
     version='1.0.1',
     description='Library to create Self-Organizing Map from MongoDB collection',
