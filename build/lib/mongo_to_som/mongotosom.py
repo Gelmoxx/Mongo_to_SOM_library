@@ -39,7 +39,6 @@ class mongo_to_som:
 
     # Filter columns based on percentage threshold
     keep_cols = col_perc[col_perc >= threshold].index.tolist()
-
     # Keep only the desired columns
     data = list(collection.find({}, {'_id': 0, **{col: 1 for col in keep_cols}}))
     df = pd.DataFrame(data)
@@ -78,7 +77,7 @@ class mongo_to_som:
     # initialising self-organising map
     num_dims = train_x_norm.shape[1]  # numnber of dimensions in the input data
     np.random.seed(40)
-    som = np.random.random_sample(size=(num_rows, num_cols, num_dims))  # map construction
+    som = np.random.random_sample(size=(self.num_rows, self.num_cols, num_dims))  # map construction
 
     # start training iterations
     for step in range(max_steps):
@@ -88,8 +87,8 @@ class mongo_to_som:
 
       t = np.random.randint(0, high=train_x_norm.shape[0])  # random index of traing data
       winner = self.winning_neuron(train_x_norm, t, som, self.num_rows, self.num_cols)
-      for row in range(num_rows):
-        for col in range(num_cols):
+      for row in range(self.num_rows):
+        for col in range(self.num_cols):
           if self.m_distance([row, col], winner) <= neighbourhood_range:
             som[row][col] += learning_rate * (train_x_norm[t] - som[row][col])  # update neighbour's weight
 
@@ -98,22 +97,22 @@ class mongo_to_som:
     # collecting labels
 
     label_data = train_y
-    map = np.empty(shape=(num_rows, num_cols), dtype=object)
+    map = np.empty(shape=(self.num_rows, self.num_cols), dtype=object)
 
-    for row in range(num_rows):
-      for col in range(num_cols):
+    for row in range(self.num_rows):
+      for col in range(self.num_cols):
         map[row][col] = []  # empty list to store the label
 
     for t in range(train_x_norm.shape[0]):
       if (t + 1) % 1000 == 0:
         print("sample data: ", t + 1)
-      winner = self.winning_neuron(train_x_norm, t, som, num_rows, num_cols)
+      winner = self.winning_neuron(train_x_norm, t, som, self.num_rows, self.num_cols)
       map[winner[0]][winner[1]].append(label_data[t])  # label of winning neuron
 
     # construct label map
-    label_map = np.zeros(shape=(num_rows, num_cols), dtype=np.int64)
-    for row in range(num_rows):
-      for col in range(num_cols):
+    label_map = np.zeros(shape=(self.num_rows, self.num_cols), dtype=np.int64)
+    for row in range(self.num_rows):
+      for col in range(self.num_cols):
         label_list = map[row][col]
         if len(label_list) == 0:
           label = 2
@@ -129,7 +128,7 @@ class mongo_to_som:
     plt.show()
 
     # reshape SOM into 3D array
-    som_3d = som.reshape(num_rows * num_cols, num_dims)
+    som_3d = som.reshape(self.num_rows * self.num_cols, num_dims)
 
     # create 3D scatter plot
     fig = plt.figure()
@@ -149,13 +148,13 @@ class mongo_to_som:
     ax.set_zlabel('Feature 3')
 
     # add lines between neighboring nodes
-    for i in range(num_rows):
-      for j in range(num_cols):
-        if j < num_cols - 1:
+    for i in range(self.num_rows):
+      for j in range(self.num_cols):
+        if j < self.num_cols - 1:
           # add line between current node and its right neighbor
           ax.plot([som[i][j][0], som[i][j + 1][0]], [som[i][j][1], som[i][j + 1][1]], [som[i][j][2], som[i][j + 1][2]],
                   color='black', linewidth=0.5)
-        if i < num_rows - 1:
+        if i < self.num_rows - 1:
           # add line between current node and its bottom neighbor
           ax.plot([som[i][j][0], som[i + 1][j][0]], [som[i][j][1], som[i + 1][j][1]], [som[i][j][2], som[i + 1][j][2]],
                   color='black', linewidth=0.5)
@@ -181,8 +180,8 @@ class mongo_to_som:
     winner = [0, 0]
     shortest_distance = np.sqrt(data.shape[1])  # initialise with max distance
     input_data = data[t]
-    for row in range(self.num_rows):
-      for col in range(self.num_cols):
+    for row in range(num_rows):
+      for col in range(num_cols):
         distance = self.e_distance(som[row][col], data[t])
         if distance < shortest_distance:
           shortest_distance = distance
@@ -195,6 +194,3 @@ class mongo_to_som:
     learning_rate = coefficient * max_learning_rate
     neighbourhood_range = ceil(coefficient * max_m_distance)
     return learning_rate, neighbourhood_range
-
-
-#mongo_to_som(10,10, int(1*10e3), 4, 0.5, 'localhost', 27017, "som_db", "sum_pms")

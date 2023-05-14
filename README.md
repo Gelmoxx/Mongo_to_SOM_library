@@ -12,6 +12,6 @@ How to use library:
 ```Python
 from mongo_to_som import mongotosom
 
-# Instantiate a Multiplication object
+# Instantiate Mongo to Som Library
 mongotosom.mongo_to_som(num_rows, num_cols, max_steps, max_m_distance, max_learning_rate, url, port, db, collection)
 ```

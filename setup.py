@@ -13,7 +13,7 @@ setup(
     name="mongo_to_som",
     packages=["mongo_to_som"],
     include_package_data=True,
-    version='1.0.4',
+    version='1.0.7',
     description='Library to create Self-Organizing Map from MongoDB collection',
     long_description=long_description,
     long_description_content_type="text/markdown",

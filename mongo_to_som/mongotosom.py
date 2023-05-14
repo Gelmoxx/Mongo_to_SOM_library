@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler #normalisation
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from matplotlib import colors
-
+import time
 
 
 class mongo_to_som:
@@ -24,6 +24,8 @@ class mongo_to_som:
     self.max_m_distance = max_m_distance
     self.max_learning_rate = max_learning_rate
 
+    start_time = time.time()
+
     client = MongoClient(self.url, self.port)
     db = client[self.db]
     collection = db[self.collection]
@@ -35,11 +37,8 @@ class mongo_to_som:
     threshold = 0.9
     col_perc = df.count() / df.shape[0]
 
-    #print(col_perc)
-
     # Filter columns based on percentage threshold
     keep_cols = col_perc[col_perc >= threshold].index.tolist()
-
     # Keep only the desired columns
     data = list(collection.find({}, {'_id': 0, **{col: 1 for col in keep_cols}}))
     df = pd.DataFrame(data)
@@ -57,19 +56,15 @@ class mongo_to_som:
 
     with open('output.txt', 'r') as file:
       reader = csv.reader(file, delimiter=',')
-      self.num_cols = len(next(reader))
+      num_cols_txt = len(next(reader))
 
     data_file = "output.txt"
-    data_x = np.loadtxt(data_file, delimiter=",", skiprows=0, usecols=range(1, self.num_cols), dtype=np.float64)
-    data_y = np.loadtxt(data_file, delimiter=",", skiprows=0, usecols=(self.num_cols - 1,), dtype=np.int64)
+    data_x = np.loadtxt(data_file, delimiter=",", skiprows=0, usecols=range(1, num_cols_txt), dtype=np.float64)
+    data_y = np.loadtxt(data_file, delimiter=",", skiprows=0, usecols=(num_cols_txt - 1,), dtype=np.int64)
 
     # train and test split
     train_x, test_x, train_y, test_y = train_test_split(data_x, data_y, test_size=0.2, random_state=42)
     print(train_x.shape, train_y.shape, test_x.shape, test_y.shape)  # check the shapes
-
-    # num_nurons = 5*np.sqrt(train_x.shape[0])
-    # grid_size = ceil(np.sqrt(num_nurons))
-    # print(grid_size)
 
     # main function
 
@@ -84,7 +79,7 @@ class mongo_to_som:
     for step in range(max_steps):
       if (step + 1) % 1000 == 0:
         print("Iteration: ", step + 1)  # print out the current iteration for every 1k
-      learning_rate, neighbourhood_range = self.decay(step, max_steps, max_learning_rate, self.max_m_distance)
+      learning_rate, neighbourhood_range = self.decay(step, max_steps, self.max_learning_rate, self.max_m_distance)
 
       t = np.random.randint(0, high=train_x_norm.shape[0])  # random index of traing data
       winner = self.winning_neuron(train_x_norm, t, som, self.num_rows, self.num_cols)
@@ -123,9 +118,14 @@ class mongo_to_som:
 
     title = ('Iteration ' + str(max_steps))
     cmap = colors.ListedColormap(['tab:green', 'tab:red', 'tab:orange'])
-    plt.imshow(label_map, cmap=cmap)
+    plt.imshow(label_map, cmap=cmap, extent=[0, self.num_cols, self.num_rows, 0])
     plt.colorbar()
     plt.title(title)
+
+    end_time = time.time()
+    time_difference = end_time - start_time
+    time_difference_rounded = round(time_difference)
+    print("Tool was running: ", time_difference_rounded, "seconds")
     plt.show()
 
     # reshape SOM into 3D array
@@ -135,18 +135,15 @@ class mongo_to_som:
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(som_3d[:, 0], som_3d[:, 1], som_3d[:, 2], c=label_map.flatten(), cmap='viridis')
-    ax.set_xlabel('Feature 1')
-    ax.set_ylabel('Feature 2')
-    ax.set_zlabel('Feature 3')
+    ax.set_xlabel('Axis X')
+    ax.set_ylabel('Axis Y')
+    ax.set_zlabel('Axis Z')
     plt.show()
 
     # create 3D scatter plot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(som_3d[:, 0], som_3d[:, 1], som_3d[:, 2], c=label_map.flatten(), cmap='viridis')
-    ax.set_xlabel('Feature 1')
-    ax.set_ylabel('Feature 2')
-    ax.set_zlabel('Feature 3')
 
     # add lines between neighboring nodes
     for i in range(self.num_rows):
@@ -161,6 +158,7 @@ class mongo_to_som:
                   color='black', linewidth=0.5)
 
     plt.show()
+
 
   # Data Normalisation
   def minmax_scaler(self, data):
@@ -195,7 +193,3 @@ class mongo_to_som:
     learning_rate = coefficient * max_learning_rate
     neighbourhood_range = ceil(coefficient * max_m_distance)
     return learning_rate, neighbourhood_range
-
-
-#mongo_to_som(10,10, int(1*10e3), 4, 0.5, 'localhost', 27017, "som_db", "sum_pms")
-print('A')

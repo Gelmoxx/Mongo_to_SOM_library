@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: mongo-to-som
-Version: 1.0.4
+Version: 1.0.7
 Summary: Library to create Self-Organizing Map from MongoDB collection
 Home-page: UNKNOWN
 Author: Tomáš Peregrín
@@ -32,7 +32,7 @@ How to use library:
 ```Python
 from mongo_to_som import mongotosom
 
-# Instantiate a Multiplication object
+# Instantiate Mongo to Som Library
 mongotosom.mongo_to_som(num_rows, num_cols, max_steps, max_m_distance, max_learning_rate, url, port, db, collection)
 ```
 
